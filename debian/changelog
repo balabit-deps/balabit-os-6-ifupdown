@@ -1,3 +1,11 @@
+ifupdown (0.8.10ubuntu1.3) xenial; urgency=medium
+
+  [ Wido den Hollander ]
+  * Wait properly for Link-Local Address to go through DAD.
+    (LP: #1447715)
+
+ -- Dan Streetman <ddstreet@canonical.com>  Tue, 17 Apr 2018 17:29:54 -0400
+
 ifupdown (0.8.10ubuntu1.2) xenial; urgency=medium
 
   * networking.service: exclude loopback device lo in ExecStop (LP: #1629972)
