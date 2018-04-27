@@ -1,3 +1,12 @@
+ifupdown (0.8.10ubuntu1.4) xenial; urgency=medium
+
+  * We are not even reading the contents of the per-interface state files
+    when running ifquery, so there is no need to lock them. Not locking
+    will allow ifquery to be called recursively from ifup and ifdown.
+    (LP: #1701023)
+
+ -- Dan Streetman <ddstreet@canonical.com>  Fri, 27 Apr 2018 08:56:12 -0400
+
 ifupdown (0.8.10ubuntu1.3) xenial; urgency=medium
 
   [ Wido den Hollander ]

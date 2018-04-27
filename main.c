@@ -14,6 +14,7 @@
 #include "header.h"
 
 const char *argv0;
+bool do_interface_lock = true;
 bool no_act = false;
 bool run_scripts = true;
 bool verbose = false;
@@ -407,6 +408,7 @@ static cmds_t determine_command(void) {
 		return iface_down;
 	} else if (strcmp(command, "ifquery") == 0) {
 		no_act = true;
+		do_interface_lock = false;
 		return iface_query;
 	} else {
 		fprintf(stderr, "This command should be called as ifup, ifdown, or ifquery\n");
@@ -829,14 +831,16 @@ static bool do_interface(const char *target_iface) {
 	/* Bail out if we are being called recursively on the same interface */
 
 	char envname[160];
-	char *siface = strdup(iface);
-	sanitize_file_name(siface);
-	snprintf(envname, sizeof envname, "IFUPDOWN_%s", siface);
-	free(siface);
-	char *envval = getenv(envname);
-	if(envval && is_locked(iface)) {
-		fprintf(stderr, "%s: recursion detected for interface %s in %s phase\n", argv0, iface, envval);
-		return false;
+	if (do_interface_lock) {
+		char *siface = strdup(iface);
+		sanitize_file_name(siface);
+		snprintf(envname, sizeof envname, "IFUPDOWN_%s", siface);
+		free(siface);
+		char *envval = getenv(envname);
+		if(envval && is_locked(iface)) {
+			fprintf(stderr, "%s: recursion detected for interface %s in %s phase\n", argv0, iface, envval);
+			return false;
+		}
 	}
 
 	/* Are we configuring a VLAN interface? If so, lock the parent interface as well. */
@@ -844,7 +848,7 @@ static bool do_interface(const char *target_iface) {
 	char piface[80];
 	FILE *plock = NULL;
 	strncpy(piface, iface, sizeof piface);
-	if ((pch = strchr(piface, '.'))) {
+	if ((pch = strchr(piface, '.')) && do_interface_lock) {
 		*pch = '\0';
 		snprintf(envname, sizeof envname, "IFUPDOWN_%s", piface);
 		char *envval = getenv(envname);
@@ -862,7 +866,8 @@ static bool do_interface(const char *target_iface) {
 	FILE *lock = NULL;
 	char *current_state = NULL;
 
-	lock = lock_interface(iface, &current_state);
+	if (do_interface_lock)
+		lock = lock_interface(iface, &current_state);
 
 	/* If we are not forcing the command, then exit with success if it is a no-op */
 
